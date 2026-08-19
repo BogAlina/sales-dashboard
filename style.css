@@ -1,4 +1,23 @@
 /* ============================================================
+   CSS-ПЕРЕМЕННЫЕ (цветовая схема)
+   ============================================================ */
+:root {
+  --color-primary: #2A5C8A;
+  --color-primary-light: #3A7CB8;
+  --color-background: #F4F7FC;
+  --color-card-bg: #FFFFFF;
+  --color-accent: #FF6B6B;
+  --color-text: #1E293B;
+  --color-text-muted: #64748B;
+  --color-border: #E2E8F0;
+  --shadow-card: 0 10px 25px rgba(42, 92, 138, 0.08);
+  --shadow-hover: 0 16px 32px rgba(42, 92, 138, 0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-family: 'Inter', sans-serif;
+  --transition: 0.25s ease-in-out;
+}
+/* ============================================================
    ФИЛЬТРЫ
    ============================================================ */
 .filter-wrapper {
@@ -57,6 +76,7 @@
 .reset-btn:active {
   transform: scale(0.97);
 }
+
 /* ============================================================
    КНОПКА ЭКСПОРТА CSV
    ============================================================ */
@@ -81,4 +101,79 @@
 
 .export-btn:active {
   transform: scale(0.97);
+}
+
+/* ============================================================
+   АНИМАЦИЯ KPI-КАРТОЧЕК ПРИ ЗАГРУЗКЕ
+   ============================================================ */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kpi-card {
+  animation: countUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.kpi-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.kpi-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.kpi-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.kpi-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* ============================================================
+   ТЁМНАЯ ТЕМА (если добавите кнопку)
+   ============================================================ */
+[data-theme="dark"] {
+  --color-background: #0f172a;
+  --color-card-bg: #1e293b;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+  --shadow-card: 0 10px 25px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 16px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Стили для кнопки темы (если добавили) */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-btn {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-btn:hover {
+  transform: rotate(20deg);
+  background: var(--color-primary);
+  color: white;
 }
