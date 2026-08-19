@@ -1,12 +1,12 @@
 {
   "kpi": {
-    "revenue": 3842500,
+    "revenue": 3842505,
     "orders": 1286,
     "avgCheck": 2988,
     "conversion": 8.4
   },
   "managers": [
-    { "manager": "Иванов А.", "region": "Москва", "district": "Центральный", "sales": 145, "revenue": 435000 },
+    { "manager": "Иванов А.", "region": "Москва", "district": "Центральный", "sales": 145, "revenue": 435005 },
     { "manager": "Петров В.", "region": "СПб", "district": "Северо-Западный", "sales": 98, "revenue": 294000 },
     { "manager": "Сидоров К.", "region": "Казань", "district": "Приволжский", "sales": 76, "revenue": 228000 },
     { "manager": "Кузнецова М.", "region": "Москва", "district": "Центральный", "sales": 210, "revenue": 630000 },
