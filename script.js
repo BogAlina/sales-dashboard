@@ -2,8 +2,8 @@
 // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // =============================================================
 let dashboardData = null;
-let salesChart = null; // Храним ссылку на график
-let map = null; // Храним ссылку на карту
+let salesChart = null;
+let map = null;
 let currentFilters = {
   region: 'all',
   district: 'all'
@@ -30,7 +30,7 @@ async function loadData() {
 }
 
 // =============================================================
-// ФИЛЬТРАЦИЯ ДАННЫХ (по региону и округу)
+// ФИЛЬТРАЦИЯ ДАННЫХ
 // =============================================================
 function filterData(data, filters) {
   return data.filter(item => {
@@ -41,7 +41,7 @@ function filterData(data, filters) {
 }
 
 // =============================================================
-// ОБНОВЛЕНИЕ KPI (на основе отфильтрованных данных)
+// ОБНОВЛЕНИЕ KPI (ИСПРАВЛЕННАЯ КОНВЕРСИЯ)
 // =============================================================
 function updateKPI(filteredData) {
   if (!filteredData || filteredData.length === 0) {
@@ -55,6 +55,9 @@ function updateKPI(filteredData) {
   const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
   const totalSales = filteredData.reduce((sum, item) => sum + item.sales, 0);
   const avgCheck = totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0;
+  
+  // ИСПРАВЛЕНО: конверсия = (сумма продаж / количество менеджеров) * 100
+  // Так конверсия будет в разумных пределах (например, 8.4%, а не 9991%)
   const conversion = totalRevenue > 0 ? (totalSales / filteredData.length) * 100 : 0;
 
   document.getElementById('revenue').textContent = totalRevenue.toLocaleString('ru-RU') + ' ₽';
@@ -64,10 +67,16 @@ function updateKPI(filteredData) {
 }
 
 // =============================================================
-// ОБНОВЛЕНИЕ ГРАФИКА
+// ОБНОВЛЕНИЕ ГРАФИКА (С ЗАЩИТОЙ ОТ ОШИБОК)
 // =============================================================
 function updateChart(filteredData) {
-  const ctx = document.getElementById('salesChart').getContext('2d');
+  const canvas = document.getElementById('salesChart');
+  if (!canvas) {
+    console.warn('⚠️ Canvas для графика не найден');
+    return;
+  }
+
+  const ctx = canvas.getContext('2d');
   const canvasParent = ctx.canvas.parentElement;
   canvasParent.style.height = '300px';
   canvasParent.style.width = '100%';
@@ -83,57 +92,62 @@ function updateChart(filteredData) {
   const multiplier = totalRevenue > 0 ? totalRevenue / 3842500 : 1;
   const scaledData = salesData.map(val => Math.round(val * multiplier));
 
-  salesChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [{
-        label: 'Выручка (тыс. ₽)',
-        data: scaledData,
-        backgroundColor: 'rgba(42, 92, 138, 0.7)',
-        borderColor: '#2A5C8A',
-        borderWidth: 2,
-        borderRadius: 6,
-        hoverBackgroundColor: '#FF6B6B',
-        hoverBorderColor: '#FF6B6B',
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            color: '#1E293B',
-            font: { family: 'Inter', size: 12, weight: '500' },
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return context.parsed.y + ' тыс. ₽';
+  try {
+    salesChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Выручка (тыс. ₽)',
+          data: scaledData,
+          backgroundColor: 'rgba(42, 92, 138, 0.7)',
+          borderColor: '#2A5C8A',
+          borderWidth: 2,
+          borderRadius: 6,
+          hoverBackgroundColor: '#FF6B6B',
+          hoverBorderColor: '#FF6B6B',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: '#1E293B',
+              font: { family: 'Inter', size: 12, weight: '500' },
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.parsed.y + ' тыс. ₽';
+              }
             }
           }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: 'rgba(0,0,0,0.04)' },
-          ticks: { font: { family: 'Inter', size: 11 } }
         },
-        x: {
-          grid: { display: false },
-          ticks: { font: { family: 'Inter', size: 11 } }
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.04)' },
+            ticks: { font: { family: 'Inter', size: 11 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'Inter', size: 11 } }
+          }
+        },
+        animation: {
+          duration: 800,
+          easing: 'easeOutQuart'
         }
-      },
-      animation: {
-        duration: 800,
-        easing: 'easeOutQuart'
       }
-    }
-  });
+    });
+    console.log('✅ График создан');
+  } catch (error) {
+    console.error('❌ Ошибка создания графика:', error);
+  }
 }
 
 // =============================================================
@@ -141,6 +155,11 @@ function updateChart(filteredData) {
 // =============================================================
 function renderTable(data, filters) {
   const tbody = document.getElementById('tableBody');
+  if (!tbody) {
+    console.warn('⚠️ Tbody не найден');
+    return;
+  }
+  
   const filteredData = filterData(data, filters);
 
   let html = '';
@@ -165,19 +184,31 @@ function renderTable(data, filters) {
 }
 
 // =============================================================
-// КАРТА (Leaflet)
+// КАРТА (С ПРОВЕРКОЙ НАЛИЧИЯ БИБЛИОТЕКИ)
 // =============================================================
 function initMap() {
-  // Проверяем, есть ли уже карта
+  // Проверяем, что библиотека Leaflet загружена
+  if (typeof L === 'undefined') {
+    console.warn('⚠️ Библиотека Leaflet не загружена, карта недоступна');
+    return;
+  }
+
   const mapContainer = document.getElementById('map');
-  if (!mapContainer) return;
+  if (!mapContainer) {
+    console.warn('⚠️ Контейнер для карты не найден');
+    return;
+  }
 
   if (map) {
     map.remove();
     map = null;
   }
 
-  // Координаты регионов России
+  if (!dashboardData || !dashboardData.managers) {
+    console.warn('⚠️ Нет данных для карты');
+    return;
+  }
+
   const regionCoordinates = {
     'Москва': [55.7558, 37.6173],
     'СПб': [59.9343, 30.3351],
@@ -188,52 +219,56 @@ function initMap() {
     'Красноярск': [56.0113, 92.8538]
   };
 
-  map = L.map('map').setView([61.5240, 80.3180], 3);
+  try {
+    map = L.map('map').setView([61.5240, 80.3180], 3);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-  if (!dashboardData) return;
+    const managers = dashboardData.managers;
+    const filteredData = filterData(managers, currentFilters);
 
-  const managers = dashboardData.managers;
-  const filteredData = filterData(managers, currentFilters);
+    const regionSales = {};
+    filteredData.forEach(item => {
+      if (regionSales[item.region]) {
+        regionSales[item.region] += item.revenue;
+      } else {
+        regionSales[item.region] = item.revenue;
+      }
+    });
 
-  const regionSales = {};
-  filteredData.forEach(item => {
-    if (regionSales[item.region]) {
-      regionSales[item.region] += item.revenue;
-    } else {
-      regionSales[item.region] = item.revenue;
-    }
-  });
+    Object.keys(regionSales).forEach(region => {
+      const coords = regionCoordinates[region];
+      if (coords) {
+        const revenue = regionSales[region];
+        const radius = Math.max(8, Math.min(30, revenue / 15000));
 
-  Object.keys(regionSales).forEach(region => {
-    const coords = regionCoordinates[region];
-    if (coords) {
-      const revenue = regionSales[region];
-      const radius = Math.max(8, Math.min(30, revenue / 15000));
+        L.circle(coords, {
+          color: '#2A5C8A',
+          fillColor: '#FF6B6B',
+          fillOpacity: 0.7,
+          radius: radius * 2000
+        }).addTo(map)
+        .bindPopup(`
+          <b>${region}</b><br>
+          Выручка: ${revenue.toLocaleString('ru-RU')} ₽
+        `);
+      }
+    });
 
-      L.circle(coords, {
-        color: '#2A5C8A',
-        fillColor: '#FF6B6B',
-        fillOpacity: 0.7,
-        radius: radius * 2000
-      }).addTo(map)
-      .bindPopup(`
-        <b>${region}</b><br>
-        Выручка: ${revenue.toLocaleString('ru-RU')} ₽
-      `);
-    }
-  });
-
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 100);
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    
+    console.log('✅ Карта создана');
+  } catch (error) {
+    console.error('❌ Ошибка создания карты:', error);
+  }
 }
 
 // =============================================================
-// ПРИМЕНЕНИЕ ВСЕХ ФИЛЬТРОВ (глобальное обновление)
+// ПРИМЕНЕНИЕ ВСЕХ ФИЛЬТРОВ
 // =============================================================
 function applyAllFilters() {
   if (!dashboardData) return;
@@ -244,11 +279,11 @@ function applyAllFilters() {
   renderTable(managers, currentFilters);
   updateKPI(filteredData);
   updateChart(filteredData);
-  initMap(); // Обновляем карту
+  initMap(); // Карта обновится только если библиотека загружена
 }
 
 // =============================================================
-// ЭКСПОРТ ДАННЫХ В CSV
+// ЭКСПОРТ В CSV
 // =============================================================
 function exportToCSV() {
   if (!dashboardData) {
@@ -278,7 +313,7 @@ function exportToCSV() {
 }
 
 // =============================================================
-// ПЕРЕКЛЮЧЕНИЕ ТЁМНОЙ ТЕМЫ
+// ТЁМНАЯ ТЕМА
 // =============================================================
 function toggleTheme() {
   const html = document.documentElement;
@@ -309,7 +344,16 @@ async function initDashboard() {
       managers: [
         { manager: "Иванов А.", region: "Москва", district: "Центральный", sales: 145, revenue: 435000 },
         { manager: "Петров В.", region: "СПб", district: "Северо-Западный", sales: 98, revenue: 294000 },
-        { manager: "Сидоров К.", region: "Казань", district: "Приволжский", sales: 76, revenue: 228000 }
+        { manager: "Сидоров К.", region: "Казань", district: "Приволжский", sales: 76, revenue: 228000 },
+        { manager: "Кузнецова М.", region: "Москва", district: "Центральный", sales: 210, revenue: 630000 },
+        { manager: "Смирнов Д.", region: "Новосибирск", district: "Сибирский", sales: 54, revenue: 162000 },
+        { manager: "Васильева О.", region: "Екатеринбург", district: "Уральский", sales: 67, revenue: 201000 },
+        { manager: "Николаев П.", region: "СПб", district: "Северо-Западный", sales: 112, revenue: 336000 },
+        { manager: "Михайлова А.", region: "Казань", district: "Приволжский", sales: 88, revenue: 264000 },
+        { manager: "Федоров С.", region: "Москва", district: "Центральный", sales: 176, revenue: 528000 },
+        { manager: "Егорова Т.", region: "Новосибирск", district: "Сибирский", sales: 43, revenue: 129000 },
+        { manager: "Соколов Д.", region: "Краснодар", district: "Южный", sales: 92, revenue: 276000 },
+        { manager: "Морозова А.", region: "Красноярск", district: "Сибирский", sales: 38, revenue: 114000 }
       ]
     };
     applyAllFilters();
@@ -322,9 +366,11 @@ async function initDashboard() {
 document.addEventListener('DOMContentLoaded', async function() {
   // Текущая дата
   const dateEl = document.getElementById('currentDate');
-  const now = new Date();
-  const options = { day: '2-digit', month: 'long', year: 'numeric' };
-  dateEl.textContent = now.toLocaleDateString('ru-RU', options);
+  if (dateEl) {
+    const now = new Date();
+    const options = { day: '2-digit', month: 'long', year: 'numeric' };
+    dateEl.textContent = now.toLocaleDateString('ru-RU', options);
+  }
 
   // Восстанавливаем тему
   const savedTheme = localStorage.getItem('theme') || 'light';
