@@ -1,17 +1,23 @@
 {
   "kpi": {
-    "revenue": 3842505,
+    "revenue": 3842500,
     "orders": 1286,
     "avgCheck": 2988,
     "conversion": 8.4
   },
   "managers": [
-    { "manager": "Иванов А.", "region": "Москва", "sales": 145, "revenue": 435005 },
-    { "manager": "Петров В.", "region": "СПб", "sales": 98, "revenue": 294000 },
-    { "manager": "Сидоров К.", "region": "Казань", "sales": 76, "revenue": 228000 },
-    { "manager": "Кузнецова М.", "region": "Москва", "sales": 210, "revenue": 630000 },
-    { "manager": "Смирнов Д.", "region": "Новосибирск", "sales": 54, "revenue": 162000 },
-    { "manager": "Васильева О.", "region": "Екатеринбург", "sales": 67, "revenue": 201000 }
+    { "manager": "Иванов А.", "region": "Москва", "district": "Центральный", "sales": 145, "revenue": 435000 },
+    { "manager": "Петров В.", "region": "СПб", "district": "Северо-Западный", "sales": 98, "revenue": 294000 },
+    { "manager": "Сидоров К.", "region": "Казань", "district": "Приволжский", "sales": 76, "revenue": 228000 },
+    { "manager": "Кузнецова М.", "region": "Москва", "district": "Центральный", "sales": 210, "revenue": 630000 },
+    { "manager": "Смирнов Д.", "region": "Новосибирск", "district": "Сибирский", "sales": 54, "revenue": 162000 },
+    { "manager": "Васильева О.", "region": "Екатеринбург", "district": "Уральский", "sales": 67, "revenue": 201000 },
+    { "manager": "Николаев П.", "region": "СПб", "district": "Северо-Западный", "sales": 112, "revenue": 336000 },
+    { "manager": "Михайлова А.", "region": "Казань", "district": "Приволжский", "sales": 88, "revenue": 264000 },
+    { "manager": "Федоров С.", "region": "Москва", "district": "Центральный", "sales": 176, "revenue": 528000 },
+    { "manager": "Егорова Т.", "region": "Новосибирск", "district": "Сибирский", "sales": 43, "revenue": 129000 },
+    { "manager": "Соколов Д.", "region": "Краснодар", "district": "Южный", "sales": 92, "revenue": 276000 },
+    { "manager": "Морозова А.", "region": "Красноярск", "district": "Сибирский", "sales": 38, "revenue": 114000 }
   ],
   "chartData": {
     "months": ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
