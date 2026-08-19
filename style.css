@@ -57,3 +57,28 @@
 .reset-btn:active {
   transform: scale(0.97);
 }
+/* ============================================================
+   КНОПКА ЭКСПОРТА CSV
+   ============================================================ */
+.export-btn {
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.export-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: scale(1.02);
+}
+
+.export-btn:active {
+  transform: scale(0.97);
+}
