@@ -1,100 +1,102 @@
 // =============================================================
-// ЗАГРУЗКА ДАННЫХ ИЗ JSON-ФАЙЛА
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // =============================================================
+let dashboardData = null;
+let salesChart = null; // Храним ссылку на график
+let currentFilters = {
+  region: 'all',
+  district: 'all'
+};
 
-let dashboardData = null; // Глобальная переменная для данных
-
-// Функция загрузки данных
+// =============================================================
+// ЗАГРУЗКА ДАННЫХ
+// =============================================================
 async function loadData() {
   try {
-    const response = await fetch('data.json');
+    const cacheBuster = Date.now();
+    const response = await fetch(`data.json?t=${cacheBuster}`);
     if (!response.ok) {
       throw new Error('Не удалось загрузить данные');
     }
     const data = await response.json();
     dashboardData = data;
+    console.log('✅ Данные успешно загружены');
     return data;
   } catch (error) {
-    console.error('Ошибка загрузки данных:', error);
-    // Показываем заглушку, если данные не загрузились
+    console.error('❌ Ошибка загрузки данных:', error);
     return null;
   }
 }
 
 // =============================================================
-// ИНИЦИАЛИЗАЦИЯ ДАШБОРДА ПОСЛЕ ЗАГРУЗКИ ДАННЫХ
+// ФИЛЬТРАЦИЯ ДАННЫХ (по региону и округу)
 // =============================================================
-
-async function initDashboard() {
-  // Загружаем данные
-  const data = await loadData();
-  
-  if (data) {
-    // Обновляем KPI
-    document.getElementById('revenue').textContent = data.kpi.revenue.toLocaleString('ru-RU') + ' ₽';
-    document.getElementById('orders').textContent = data.kpi.orders.toLocaleString('ru-RU');
-    document.getElementById('avgCheck').textContent = data.kpi.avgCheck.toLocaleString('ru-RU') + ' ₽';
-    document.getElementById('conversion').textContent = data.kpi.conversion + '%';
-    
-    // Рендерим таблицу с данными из JSON
-    renderTable(data.managers, 'all');
-    
-    // Инициализируем график с данными из JSON
-    initChart(data.chartData);
-  } else {
-    // Если данные не загрузились, используем локальные (запасной вариант)
-    console.warn('Использую локальные данные');
-    renderTable(managerData, 'all');
-    initChart({ months: months, sales: salesData });
-  }
-}
-
-// Изменяем функцию renderTable, чтобы принимать данные
-function renderTable(data, regionFilter = 'all') {
-  const tbody = document.getElementById('tableBody');
-  
-  // Используем переданные данные или глобальные
-  const sourceData = data || dashboardData?.managers || managerData;
-  
-  const filtered = regionFilter === 'all'
-    ? sourceData
-    : sourceData.filter(item => item.region === regionFilter);
-
-  let html = '';
-  filtered.forEach(item => {
-    html += `
-      <tr>
-        <td>${item.manager}</td>
-        <td>${item.region}</td>
-        <td>${item.sales}</td>
-        <td>${item.revenue.toLocaleString('ru-RU')}</td>
-      </tr>
-    `;
+function filterData(data, filters) {
+  return data.filter(item => {
+    // Фильтр по региону
+    const regionMatch = filters.region === 'all' || item.region === filters.region;
+    // Фильтр по округу
+    const districtMatch = filters.district === 'all' || item.district === filters.district;
+    return regionMatch && districtMatch;
   });
-
-  if (filtered.length === 0) {
-    html = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--color-text-muted);">Нет данных для выбранного региона</td></tr>`;
-  }
-
-  tbody.innerHTML = html;
 }
 
-// Изменяем инициализацию графика
-function initChart(chartData) {
+// =============================================================
+// ОБНОВЛЕНИЕ KPI (на основе отфильтрованных данных)
+// =============================================================
+function updateKPI(filteredData) {
+  if (!filteredData || filteredData.length === 0) {
+    document.getElementById('revenue').textContent = '0 ₽';
+    document.getElementById('orders').textContent = '0';
+    document.getElementById('avgCheck').textContent = '0 ₽';
+    document.getElementById('conversion').textContent = '0%';
+    return;
+  }
+
+  const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
+  const totalSales = filteredData.reduce((sum, item) => sum + item.sales, 0);
+  const avgCheck = totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0;
+  const conversion = totalRevenue > 0 ? (totalSales / filteredData.length) * 100 : 0;
+
+  document.getElementById('revenue').textContent = totalRevenue.toLocaleString('ru-RU') + ' ₽';
+  document.getElementById('orders').textContent = totalSales.toLocaleString('ru-RU');
+  document.getElementById('avgCheck').textContent = avgCheck.toLocaleString('ru-RU') + ' ₽';
+  document.getElementById('conversion').textContent = conversion.toFixed(1) + '%';
+}
+
+// =============================================================
+// ОБНОВЛЕНИЕ ГРАФИКА
+// =============================================================
+function updateChart(filteredData) {
   const ctx = document.getElementById('salesChart').getContext('2d');
   const canvasParent = ctx.canvas.parentElement;
   canvasParent.style.height = '300px';
   canvasParent.style.width = '100%';
 
-  const data = chartData || { months: months, sales: salesData };
+  // Если график уже существует — уничтожаем
+  if (salesChart) {
+    salesChart.destroy();
+  }
 
-  new Chart(ctx, {
+  // Группируем данные по месяцам (для демонстрации используем статические данные)
+  // В реальном проекте здесь была бы агрегация по месяцам из данных
+  const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+  const salesData = [320, 280, 390, 450, 410, 520, 580, 610, 560, 490, 530, 620];
+
+  // Если есть фильтр по региону — показываем данные для него
+  // Для демо просто показываем всю выручку в разрезе месяцев
+  const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
+  const multiplier = totalRevenue > 0 ? totalRevenue / 3842500 : 1; // Коэффициент масштабирования
+  
+  const scaledData = salesData.map(val => Math.round(val * multiplier));
+
+  salesChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: data.months,
+      labels: months,
       datasets: [{
         label: 'Выручка (тыс. ₽)',
-        data: data.sales,
+        data: scaledData,
         backgroundColor: 'rgba(42, 92, 138, 0.7)',
         borderColor: '#2A5C8A',
         borderWidth: 2,
@@ -142,24 +144,105 @@ function initChart(chartData) {
 }
 
 // =============================================================
-// ФИЛЬТР ПО РЕГИОНАМ (обновлённый)
+// ОБНОВЛЕНИЕ ТАБЛИЦЫ
+// =============================================================
+function renderTable(data, filters) {
+  const tbody = document.getElementById('tableBody');
+  const filteredData = filterData(data, filters);
+
+  let html = '';
+  filteredData.forEach(item => {
+    html += `
+      <tr>
+        <td>${item.manager}</td>
+        <td>${item.region}</td>
+        <td>${item.district || '-'}</td>
+        <td>${item.sales}</td>
+        <td>${item.revenue.toLocaleString('ru-RU')}</td>
+      </tr>
+    `;
+  });
+
+  if (filteredData.length === 0) {
+    html = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--color-text-muted);">Нет данных для выбранных фильтров</td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+  
+  // Возвращаем отфильтрованные данные для обновления KPI и графика
+  return filteredData;
+}
+
+// =============================================================
+// ПРИМЕНЕНИЕ ВСЕХ ФИЛЬТРОВ (глобальное обновление)
+// =============================================================
+function applyAllFilters() {
+  if (!dashboardData) return;
+  
+  const managers = dashboardData.managers;
+  const filteredData = filterData(managers, currentFilters);
+  
+  // Обновляем все элементы
+  renderTable(managers, currentFilters);
+  updateKPI(filteredData);
+  updateChart(filteredData);
+}
+
+// =============================================================
+// ИНИЦИАЛИЗАЦИЯ ДАШБОРДА
+// =============================================================
+async function initDashboard() {
+  const data = await loadData();
+  
+  if (data) {
+    dashboardData = data;
+    applyAllFilters();
+  } else {
+    console.warn('⚠️ Использую локальные данные (запасной вариант)');
+    // Запасной вариант с локальными данными
+    dashboardData = {
+      managers: [
+        { manager: "Иванов А.", region: "Москва", district: "Центральный", sales: 145, revenue: 435000 },
+        { manager: "Петров В.", region: "СПб", district: "Северо-Западный", sales: 98, revenue: 294000 },
+        { manager: "Сидоров К.", region: "Казань", district: "Приволжский", sales: 76, revenue: 228000 }
+      ]
+    };
+    applyAllFilters();
+  }
+}
+
+// =============================================================
+// ОБРАБОТЧИКИ СОБЫТИЙ
 // =============================================================
 document.addEventListener('DOMContentLoaded', async function() {
-  // Загружаем дату
+  // Текущая дата
   const dateEl = document.getElementById('currentDate');
   const now = new Date();
   const options = { day: '2-digit', month: 'long', year: 'numeric' };
   dateEl.textContent = now.toLocaleDateString('ru-RU', options);
 
-  // Инициализируем дашборд с загрузкой данных
+  // Инициализация
   await initDashboard();
 
-  // Навешиваем обработчик на фильтр
-  const filterSelect = document.getElementById('regionFilter');
-  filterSelect.addEventListener('change', (e) => {
-    const selectedRegion = e.target.value;
-    // Используем данные из загруженного JSON или локальные
-    const sourceData = dashboardData?.managers || managerData;
-    renderTable(sourceData, selectedRegion);
+  // Фильтр по регионам
+  const regionFilter = document.getElementById('regionFilter');
+  regionFilter.addEventListener('change', (e) => {
+    currentFilters.region = e.target.value;
+    applyAllFilters();
+  });
+
+  // Фильтр по округам
+  const districtFilter = document.getElementById('districtFilter');
+  districtFilter.addEventListener('change', (e) => {
+    currentFilters.district = e.target.value;
+    applyAllFilters();
+  });
+
+  // Кнопка сброса
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    regionFilter.value = 'all';
+    districtFilter.value = 'all';
+    currentFilters = { region: 'all', district: 'all' };
+    applyAllFilters();
   });
 });
