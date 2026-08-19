@@ -3,6 +3,7 @@
 // =============================================================
 let dashboardData = null;
 let salesChart = null; // Храним ссылку на график
+let map = null; // Храним ссылку на карту
 let currentFilters = {
   region: 'all',
   district: 'all'
@@ -33,9 +34,7 @@ async function loadData() {
 // =============================================================
 function filterData(data, filters) {
   return data.filter(item => {
-    // Фильтр по региону
     const regionMatch = filters.region === 'all' || item.region === filters.region;
-    // Фильтр по округу
     const districtMatch = filters.district === 'all' || item.district === filters.district;
     return regionMatch && districtMatch;
   });
@@ -73,21 +72,15 @@ function updateChart(filteredData) {
   canvasParent.style.height = '300px';
   canvasParent.style.width = '100%';
 
-  // Если график уже существует — уничтожаем
   if (salesChart) {
     salesChart.destroy();
   }
 
-  // Группируем данные по месяцам (для демонстрации используем статические данные)
-  // В реальном проекте здесь была бы агрегация по месяцам из данных
   const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
   const salesData = [320, 280, 390, 450, 410, 520, 580, 610, 560, 490, 530, 620];
 
-  // Если есть фильтр по региону — показываем данные для него
-  // Для демо просто показываем всю выручку в разрезе месяцев
   const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
-  const multiplier = totalRevenue > 0 ? totalRevenue / 3842500 : 1; // Коэффициент масштабирования
-  
+  const multiplier = totalRevenue > 0 ? totalRevenue / 3842500 : 1;
   const scaledData = salesData.map(val => Math.round(val * multiplier));
 
   salesChart = new Chart(ctx, {
@@ -168,9 +161,75 @@ function renderTable(data, filters) {
   }
 
   tbody.innerHTML = html;
-  
-  // Возвращаем отфильтрованные данные для обновления KPI и графика
   return filteredData;
+}
+
+// =============================================================
+// КАРТА (Leaflet)
+// =============================================================
+function initMap() {
+  // Проверяем, есть ли уже карта
+  const mapContainer = document.getElementById('map');
+  if (!mapContainer) return;
+
+  if (map) {
+    map.remove();
+    map = null;
+  }
+
+  // Координаты регионов России
+  const regionCoordinates = {
+    'Москва': [55.7558, 37.6173],
+    'СПб': [59.9343, 30.3351],
+    'Казань': [55.7887, 49.1221],
+    'Новосибирск': [55.0084, 82.9357],
+    'Екатеринбург': [56.8389, 60.6057],
+    'Краснодар': [45.0355, 38.9755],
+    'Красноярск': [56.0113, 92.8538]
+  };
+
+  map = L.map('map').setView([61.5240, 80.3180], 3);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  if (!dashboardData) return;
+
+  const managers = dashboardData.managers;
+  const filteredData = filterData(managers, currentFilters);
+
+  const regionSales = {};
+  filteredData.forEach(item => {
+    if (regionSales[item.region]) {
+      regionSales[item.region] += item.revenue;
+    } else {
+      regionSales[item.region] = item.revenue;
+    }
+  });
+
+  Object.keys(regionSales).forEach(region => {
+    const coords = regionCoordinates[region];
+    if (coords) {
+      const revenue = regionSales[region];
+      const radius = Math.max(8, Math.min(30, revenue / 15000));
+
+      L.circle(coords, {
+        color: '#2A5C8A',
+        fillColor: '#FF6B6B',
+        fillOpacity: 0.7,
+        radius: radius * 2000
+      }).addTo(map)
+      .bindPopup(`
+        <b>${region}</b><br>
+        Выручка: ${revenue.toLocaleString('ru-RU')} ₽
+      `);
+    }
+  });
+
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
 }
 
 // =============================================================
@@ -178,14 +237,61 @@ function renderTable(data, filters) {
 // =============================================================
 function applyAllFilters() {
   if (!dashboardData) return;
-  
+
   const managers = dashboardData.managers;
   const filteredData = filterData(managers, currentFilters);
-  
-  // Обновляем все элементы
+
   renderTable(managers, currentFilters);
   updateKPI(filteredData);
   updateChart(filteredData);
+  initMap(); // Обновляем карту
+}
+
+// =============================================================
+// ЭКСПОРТ ДАННЫХ В CSV
+// =============================================================
+function exportToCSV() {
+  if (!dashboardData) {
+    alert('Данные ещё не загружены');
+    return;
+  }
+
+  const managers = dashboardData.managers;
+  const filteredData = filterData(managers, currentFilters);
+
+  if (filteredData.length === 0) {
+    alert('Нет данных для экспорта');
+    return;
+  }
+
+  let csv = 'Менеджер,Регион,Округ,Продажи (шт.),Выручка (₽)\n';
+  filteredData.forEach(item => {
+    csv += `${item.manager},${item.region},${item.district || '-'},${item.sales},${item.revenue}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `sales_data_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// =============================================================
+// ПЕРЕКЛЮЧЕНИЕ ТЁМНОЙ ТЕМЫ
+// =============================================================
+function toggleTheme() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  }
+
+  localStorage.setItem('theme', newTheme);
 }
 
 // =============================================================
@@ -193,13 +299,12 @@ function applyAllFilters() {
 // =============================================================
 async function initDashboard() {
   const data = await loadData();
-  
+
   if (data) {
     dashboardData = data;
     applyAllFilters();
   } else {
     console.warn('⚠️ Использую локальные данные (запасной вариант)');
-    // Запасной вариант с локальными данными
     dashboardData = {
       managers: [
         { manager: "Иванов А.", region: "Москва", district: "Центральный", sales: 145, revenue: 435000 },
@@ -221,28 +326,50 @@ document.addEventListener('DOMContentLoaded', async function() {
   const options = { day: '2-digit', month: 'long', year: 'numeric' };
   dateEl.textContent = now.toLocaleDateString('ru-RU', options);
 
+  // Восстанавливаем тему
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    themeBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    themeBtn.addEventListener('click', toggleTheme);
+  }
+
   // Инициализация
   await initDashboard();
 
   // Фильтр по регионам
   const regionFilter = document.getElementById('regionFilter');
-  regionFilter.addEventListener('change', (e) => {
-    currentFilters.region = e.target.value;
-    applyAllFilters();
-  });
+  if (regionFilter) {
+    regionFilter.addEventListener('change', (e) => {
+      currentFilters.region = e.target.value;
+      applyAllFilters();
+    });
+  }
 
   // Фильтр по округам
   const districtFilter = document.getElementById('districtFilter');
-  districtFilter.addEventListener('change', (e) => {
-    currentFilters.district = e.target.value;
-    applyAllFilters();
-  });
+  if (districtFilter) {
+    districtFilter.addEventListener('change', (e) => {
+      currentFilters.district = e.target.value;
+      applyAllFilters();
+    });
+  }
 
   // Кнопка сброса
-  document.getElementById('resetFilters').addEventListener('click', () => {
-    regionFilter.value = 'all';
-    districtFilter.value = 'all';
-    currentFilters = { region: 'all', district: 'all' };
-    applyAllFilters();
-  });
+  const resetBtn = document.getElementById('resetFilters');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (regionFilter) regionFilter.value = 'all';
+      if (districtFilter) districtFilter.value = 'all';
+      currentFilters = { region: 'all', district: 'all' };
+      applyAllFilters();
+    });
+  }
+
+  // Кнопка экспорта CSV
+  const exportBtn = document.getElementById('exportCSV');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportToCSV);
+  }
 });
