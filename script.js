@@ -3,7 +3,6 @@
 // =============================================================
 let dashboardData = null;
 let salesChart = null;
-let map = null;
 let currentFilters = {
   region: 'all',
   district: 'all'
@@ -41,7 +40,7 @@ function filterData(data, filters) {
 }
 
 // =============================================================
-// ОБНОВЛЕНИЕ KPI (ИСПРАВЛЕННАЯ КОНВЕРСИЯ)
+// ОБНОВЛЕНИЕ KPI
 // =============================================================
 function updateKPI(filteredData) {
   if (!filteredData || filteredData.length === 0) {
@@ -55,9 +54,6 @@ function updateKPI(filteredData) {
   const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
   const totalSales = filteredData.reduce((sum, item) => sum + item.sales, 0);
   const avgCheck = totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0;
-  
-  // ИСПРАВЛЕНО: конверсия = (сумма продаж / количество менеджеров) * 100
-  // Так конверсия будет в разумных пределах (например, 8.4%, а не 9991%)
   const conversion = totalRevenue > 0 ? (totalSales / filteredData.length) * 100 : 0;
 
   document.getElementById('revenue').textContent = totalRevenue.toLocaleString('ru-RU') + ' ₽';
@@ -67,7 +63,7 @@ function updateKPI(filteredData) {
 }
 
 // =============================================================
-// ОБНОВЛЕНИЕ ГРАФИКА (С ЗАЩИТОЙ ОТ ОШИБОК)
+// ОБНОВЛЕНИЕ ГРАФИКА
 // =============================================================
 function updateChart(filteredData) {
   const canvas = document.getElementById('salesChart');
@@ -184,90 +180,6 @@ function renderTable(data, filters) {
 }
 
 // =============================================================
-// КАРТА (С ПРОВЕРКОЙ НАЛИЧИЯ БИБЛИОТЕКИ)
-// =============================================================
-function initMap() {
-  // Проверяем, что библиотека Leaflet загружена
-  if (typeof L === 'undefined') {
-    console.warn('⚠️ Библиотека Leaflet не загружена, карта недоступна');
-    return;
-  }
-
-  const mapContainer = document.getElementById('map');
-  if (!mapContainer) {
-    console.warn('⚠️ Контейнер для карты не найден');
-    return;
-  }
-
-  if (map) {
-    map.remove();
-    map = null;
-  }
-
-  if (!dashboardData || !dashboardData.managers) {
-    console.warn('⚠️ Нет данных для карты');
-    return;
-  }
-
-  const regionCoordinates = {
-    'Москва': [55.7558, 37.6173],
-    'СПб': [59.9343, 30.3351],
-    'Казань': [55.7887, 49.1221],
-    'Новосибирск': [55.0084, 82.9357],
-    'Екатеринбург': [56.8389, 60.6057],
-    'Краснодар': [45.0355, 38.9755],
-    'Красноярск': [56.0113, 92.8538]
-  };
-
-  try {
-    map = L.map('map').setView([61.5240, 80.3180], 3);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    const managers = dashboardData.managers;
-    const filteredData = filterData(managers, currentFilters);
-
-    const regionSales = {};
-    filteredData.forEach(item => {
-      if (regionSales[item.region]) {
-        regionSales[item.region] += item.revenue;
-      } else {
-        regionSales[item.region] = item.revenue;
-      }
-    });
-
-    Object.keys(regionSales).forEach(region => {
-      const coords = regionCoordinates[region];
-      if (coords) {
-        const revenue = regionSales[region];
-        const radius = Math.max(8, Math.min(30, revenue / 15000));
-
-        L.circle(coords, {
-          color: '#2A5C8A',
-          fillColor: '#FF6B6B',
-          fillOpacity: 0.7,
-          radius: radius * 2000
-        }).addTo(map)
-        .bindPopup(`
-          <b>${region}</b><br>
-          Выручка: ${revenue.toLocaleString('ru-RU')} ₽
-        `);
-      }
-    });
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-    
-    console.log('✅ Карта создана');
-  } catch (error) {
-    console.error('❌ Ошибка создания карты:', error);
-  }
-}
-
-// =============================================================
 // ПРИМЕНЕНИЕ ВСЕХ ФИЛЬТРОВ
 // =============================================================
 function applyAllFilters() {
@@ -279,7 +191,6 @@ function applyAllFilters() {
   renderTable(managers, currentFilters);
   updateKPI(filteredData);
   updateChart(filteredData);
-  initMap(); // Карта обновится только если библиотека загружена
 }
 
 // =============================================================
