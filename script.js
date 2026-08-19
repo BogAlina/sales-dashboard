@@ -47,19 +47,21 @@ function updateKPI(filteredData) {
     document.getElementById('revenue').textContent = '0 ₽';
     document.getElementById('orders').textContent = '0';
     document.getElementById('avgCheck').textContent = '0 ₽';
-    document.getElementById('conversion').textContent = '0%';
+    document.getElementById('conversion').textContent = '0';
     return;
   }
 
   const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
   const totalSales = filteredData.reduce((sum, item) => sum + item.sales, 0);
   const avgCheck = totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0;
-  const conversion = totalRevenue > 0 ? (totalSales / filteredData.length) * 100 : 0;
+  
+  // НОВАЯ ФОРМУЛА: средняя выручка на одного менеджера
+  const avgRevenuePerManager = Math.round(totalRevenue / filteredData.length);
 
   document.getElementById('revenue').textContent = totalRevenue.toLocaleString('ru-RU') + ' ₽';
   document.getElementById('orders').textContent = totalSales.toLocaleString('ru-RU');
   document.getElementById('avgCheck').textContent = avgCheck.toLocaleString('ru-RU') + ' ₽';
-  document.getElementById('conversion').textContent = conversion.toFixed(1) + '%';
+  document.getElementById('conversion').textContent = avgRevenuePerManager.toLocaleString('ru-RU') + ' ₽';
 }
 
 // =============================================================
