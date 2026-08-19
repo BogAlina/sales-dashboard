@@ -1,0 +1,430 @@
+/* ============================================================
+   CSS-переменные (цветовая схема)
+   ============================================================ */
+:root {
+  --color-primary: #2A5C8A;
+  --color-primary-light: #3A7CB8;
+  --color-background: #F4F7FC;
+  --color-card-bg: #FFFFFF;
+  --color-accent: #FF6B6B;
+  --color-text: #1E293B;
+  --color-text-muted: #64748B;
+  --color-border: #E2E8F0;
+
+  --shadow-card: 0 10px 25px rgba(42, 92, 138, 0.08);
+  --shadow-hover: 0 16px 32px rgba(42, 92, 138, 0.15);
+
+  --radius: 16px;
+  --radius-sm: 10px;
+
+  --font-family: 'Inter', sans-serif;
+
+  --transition: 0.25s ease-in-out;
+}
+
+/* ============================================================
+   Глобальные сбросы и база
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* ============================================================
+   Анимация загрузки (fadeIn)
+   ============================================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   ШАПКА
+   ============================================================ */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+  background: var(--color-card-bg);
+  padding: 16px 28px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-text {
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.logo-text span {
+  color: var(--color-accent);
+}
+
+.title {
+  font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.date {
+  font-size: clamp(0.85rem, 1.2vw, 1rem);
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   KPI-КАРТОЧКИ (Flexbox)
+   ============================================================ */
+.kpi-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.kpi-card {
+  flex: 1 1 200px;
+  background: var(--color-card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform var(--transition), box-shadow var(--transition);
+  cursor: default;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.kpi-card:active {
+  transform: scale(0.97);
+}
+
+.kpi-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kpi-value {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+/* Акцентная карточка (конверсия) */
+.kpi-card.highlight .kpi-value {
+  color: var(--color-accent);
+}
+
+/* ============================================================
+   СЕТКА: график + таблица (Grid)
+   ============================================================ */
+.charts-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.chart-container,
+.table-container {
+  background: var(--color-card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px 24px;
+  transition: box-shadow var(--transition);
+}
+
+.chart-container:hover,
+.table-container:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.chart-container h2,
+.table-container h2 {
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+/* ============================================================
+   ТАБЛИЦА
+   ============================================================ */
+.table-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.filter-wrapper select {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.filter-wrapper select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(42, 92, 138, 0.15);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+thead {
+  background: var(--color-background);
+  border-radius: var(--radius-sm);
+}
+
+th {
+  text-align: left;
+  padding: 12px 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid var(--color-border);
+}
+
+td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: rgba(42, 92, 138, 0.04);
+}
+
+/* ============================================================
+   ФУТЕР
+   ============================================================ */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+.footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.footer a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   МЕДИА-ЗАПРОСЫ (адаптивность)
+   ============================================================ */
+
+/* ---------- Планшет (768px) ---------- */
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .header {
+    padding: 14px 18px;
+  }
+
+  .kpi-grid {
+    gap: 14px;
+  }
+
+  .kpi-card {
+    flex: 1 1 150px;
+    padding: 16px 18px;
+  }
+
+  .charts-tables-grid {
+    grid-template-columns: 1fr; /* одна колонка */
+    gap: 20px;
+  }
+
+  .chart-container,
+  .table-container {
+    padding: 16px 18px;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-wrapper {
+    justify-content: space-between;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* ---------- Телефон (480px) ---------- */
+@media (max-width: 480px) {
+  body {
+    padding: 8px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 14px 12px;
+  }
+
+  .logo {
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .date {
+    align-self: center;
+  }
+
+  .kpi-grid {
+    flex-direction: column; /* карточки в столбик */
+    gap: 12px;
+  }
+
+  .kpi-card {
+    flex: 1 1 auto;
+    padding: 14px 16px;
+  }
+
+  .charts-tables-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-container,
+  .table-container {
+    padding: 14px 12px;
+  }
+
+  .filter-wrapper {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-wrapper select {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: 8px 6px;
+  }
+
+  .footer {
+    font-size: 0.75rem;
+  }
+}

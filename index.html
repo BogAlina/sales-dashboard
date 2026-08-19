@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Дашборд продаж</title>
+
+  <!-- Подключение Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Подключаем наши стили -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="dashboard">
+
+    <!-- ===== ШАПКА ===== -->
+    <header class="header">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="36" height="36" rx="10" fill="#2A5C8A" stroke="white" stroke-width="2"/>
+          <path d="M12 28L20 12L28 28" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="20" cy="22" r="3" fill="white"/>
+        </svg>
+        <span class="logo-text">Sales<span>Dash</span></span>
+      </div>
+      <h1 class="title">Дашборд продаж</h1>
+      <div class="date" id="currentDate"></div>
+    </header>
+
+    <!-- ===== KPI-КАРТОЧКИ ===== -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Выручка</span>
+          <span class="kpi-value" id="revenue">3 842 500 ₽</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Заказы</span>
+          <span class="kpi-value" id="orders">1 286</span>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🧾</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Средний чек</span>
+          <span class="kpi-value" id="avgCheck">2 988 ₽</span>
+        </div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-content">
+          <span class="kpi-label">Конверсия</span>
+          <span class="kpi-value" id="conversion">8.4%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ГРАФИК + ТАБЛИЦА (сетка Grid) ===== -->
+    <section class="charts-tables-grid">
+      <!-- График -->
+      <div class="chart-container">
+        <h2>Динамика продаж по месяцам</h2>
+        <canvas id="salesChart"></canvas>
+      </div>
+
+      <!-- Таблица с фильтром -->
+      <div class="table-container">
+        <div class="table-header">
+          <h2>Данные по менеджерам</h2>
+          <div class="filter-wrapper">
+            <label for="regionFilter">Фильтр по региону:</label>
+            <select id="regionFilter">
+              <option value="all">Все регионы</option>
+              <option value="Москва">Москва</option>
+              <option value="СПб">Санкт-Петербург</option>
+              <option value="Казань">Казань</option>
+              <option value="Новосибирск">Новосибирск</option>
+              <option value="Екатеринбург">Екатеринбург</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="managerTable">
+            <thead>
+              <tr>
+                <th>Менеджер</th>
+                <th>Регион</th>
+                <th>Продажи (шт.)</th>
+                <th>Выручка (₽)</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Строки будут вставлены из JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ФУТЕР ===== -->
+    <footer class="footer">
+      <span>© 2026 — <a href="https://github.com/yourusername" target="_blank">GitHub</a></span>
+      <span>Сделано с ❤️ для портфолио</span>
+    </footer>
+
+  </div>
+
+  <!-- Подключаем наш JS -->
+  <script src="script.js"></script>
+</body>
+</html>
